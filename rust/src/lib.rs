@@ -66,7 +66,7 @@ pub const ENV_PROCESSOR_ARCHITECTURE: &str = "PROCESSOR_ARCHITECTURE";
 pub const FALLBACK_RETRIES: u32 = 5;
 pub const WHERE_COMMAND: &str = "where {}";
 pub const WHICH_COMMAND: &str = "which {}";
-pub const UNAME_COMMAND: &str = "uname -m";
+pub const UNAME_COMMAND: &str = "uname -{}";
 
 pub trait SeleniumManager {
     // ----------------------------------------------------------

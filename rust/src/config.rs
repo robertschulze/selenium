@@ -16,9 +16,14 @@
 // under the License.
 
 use crate::config::OS::{LINUX, MACOS, WINDOWS};
-use crate::{run_shell_command, ENV_PROCESSOR_ARCHITECTURE, REQUEST_TIMEOUT_SEC, UNAME_COMMAND};
+use crate::{
+    format_one_arg, run_shell_command, ENV_PROCESSOR_ARCHITECTURE, REQUEST_TIMEOUT_SEC,
+    UNAME_COMMAND,
+};
 use std::env;
 use std::env::consts::OS;
+
+pub const ARM64_ARCH: &str = "arm64";
 
 pub struct ManagerConfig {
     pub browser_version: String,
@@ -36,7 +41,17 @@ impl ManagerConfig {
         let self_arch = if WINDOWS.is(self_os) {
             env::var(ENV_PROCESSOR_ARCHITECTURE).unwrap_or_default()
         } else {
-            run_shell_command(self_os, UNAME_COMMAND.to_string()).unwrap_or_default()
+            let uname_a = format_one_arg(UNAME_COMMAND, "a");
+            if run_shell_command(self_os, uname_a)
+                .unwrap_or_default()
+                .to_ascii_lowercase()
+                .contains(ARM64_ARCH)
+            {
+                ARM64_ARCH.to_string()
+            } else {
+                let uname_m = format_one_arg(UNAME_COMMAND, "m");
+                run_shell_command(self_os, uname_m).unwrap_or_default()
+            }
         };
         ManagerConfig {
             browser_version: "".to_string(),
@@ -109,7 +124,7 @@ impl ARCH {
         match self {
             ARCH::X32 => vec!["x86", "i386"],
             ARCH::X64 => vec!["x86_64", "x64", "i686", "amd64", "ia64"],
-            ARCH::ARM64 => vec!["aarch64", "arm64", "arm"],
+            ARCH::ARM64 => vec![ARM64_ARCH, "aarch64", "arm"],
         }
     }
 
