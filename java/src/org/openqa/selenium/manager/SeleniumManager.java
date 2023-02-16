@@ -18,6 +18,7 @@ package org.openqa.selenium.manager;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
+import com.google.gson.GsonBuilder;
 import org.openqa.selenium.Beta;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.WebDriverException;
@@ -53,7 +54,7 @@ public class SeleniumManager {
 
     private static final String SELENIUM_MANAGER = "selenium-manager";
     private static final String EXE = ".exe";
-    private static final String INFO = "INFO\t";
+    private static final String WARN = "WARN";
 
     private static SeleniumManager manager;
 
@@ -110,8 +111,11 @@ public class SeleniumManager {
             throw new WebDriverException("Unsuccessful command executed: " + Arrays.toString(command) +
                     "\n" + output);
         }
-
-        return output.replace(INFO, "").trim();
+        SeleniumManagerJsonOutput jsonOutput = new GsonBuilder().create().fromJson(output,
+                SeleniumManagerJsonOutput.class);
+        jsonOutput.logs.stream().filter(log -> log.level.equalsIgnoreCase(WARN))
+                .forEach(log -> LOG.warning(log.message));
+        return jsonOutput.result.message;
     }
 
     /**
@@ -162,7 +166,7 @@ public class SeleniumManager {
         File binaryFile = getBinary();
         if (binaryFile != null) {
             driverPath = runCommand(binaryFile.getAbsolutePath(),
-                    "--driver", driverName.replaceAll(EXE, ""));
+                    "--output", "json", "--driver", driverName.replaceAll(EXE, ""));
         }
         return driverPath;
     }
